@@ -63,7 +63,7 @@ describe("Auth API Endpoints", () => {
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Username is required.");
+      expect(response.body.error).toBe("Invalid username. Username must be at least 3 characters long.");
     });
     it("should return an error if the username is shorter than 3 characters", async () => {
       // Test case: short username
@@ -84,7 +84,7 @@ describe("Auth API Endpoints", () => {
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
       expect(response.body.error).toBe(
-        "Username must be at least 3 characters long."
+        "Invalid username. Username must be at least 3 characters long."
       );
     });
 
@@ -104,7 +104,7 @@ describe("Auth API Endpoints", () => {
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Password is required.");
+      expect(response.body.error).toBe("Invalid password. Password must be at least 6 characters long.");
     });
 
     it("should return an error if the password is shorter than 6 characters", async () => {
@@ -125,7 +125,7 @@ describe("Auth API Endpoints", () => {
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
       expect(response.body.error).toBe(
-        "Password must be at least 6 characters long."
+        "Invalid password. Password must be at least 6 characters long."
       );
     });
   });
