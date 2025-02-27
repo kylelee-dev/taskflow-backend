@@ -10,7 +10,7 @@ describe("Auth API Endpoints", () => {
       // Test case: successful registration
       // Arrange (Setup test data, if needed)
       const registrationData = {
-        username: "testuser",
+        username: "testuser1",
         email: "test@example.com",
         password: "password123",
       };
@@ -63,7 +63,9 @@ describe("Auth API Endpoints", () => {
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Invalid username. Username must be at least 3 characters long.");
+      expect(response.body.error).toBe(
+        "Invalid username. Username must be at least 3 characters long."
+      );
     });
     it("should return an error if the username is shorter than 3 characters", async () => {
       // Test case: short username
@@ -104,7 +106,9 @@ describe("Auth API Endpoints", () => {
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe("Registration failed.");
       expect(response.body).toHaveProperty("error");
-      expect(response.body.error).toBe("Invalid password. Password must be at least 6 characters long.");
+      expect(response.body.error).toBe(
+        "Invalid password. Password must be at least 6 characters long."
+      );
     });
 
     it("should return an error if the password is shorter than 6 characters", async () => {
@@ -127,6 +131,24 @@ describe("Auth API Endpoints", () => {
       expect(response.body.error).toBe(
         "Invalid password. Password must be at least 6 characters long."
       );
+    });
+    it("should return an error if the username already exists", async () => {
+      const registrationData = {
+        username: "testuser",
+        email: "test@example.com",
+        password: "password123",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(registrationData);
+
+      expect(response.status).toBe(409);
+      expect(response.headers["content-type"]).toContain("application/json");
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe("Registration failed.");
+      expect(response.body).toHaveProperty("error");
+      expect(response.body.error).toBe("Username already exists.");
     });
   });
 });

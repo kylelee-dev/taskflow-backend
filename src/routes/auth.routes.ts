@@ -1,62 +1,58 @@
 import express, { Request, Response } from "express";
-import { isValidEmail, isValidPassword, isValidUsername } from "../utils/validationUtils";
+import {
+  isValidEmail,
+  isValidPassword,
+  isValidUsername,
+} from "../utils/validationUtils";
+import { supabase } from "../utils/supabaseClient";
 
 const router = express.Router();
 const failedResponse = {
   success: false,
   message: "Registration failed.",
 };
-router.post("/register", (req: Request, res: Response) => {
+router.post("/register", async (req: Request, res: Response): Promise<any> => {
   const { email, username, password } = req.body;
   if (!isValidEmail(email)) {
-    res.status(400).json({
+    return res.status(400).json({
       ...failedResponse,
       error: "Invalid email address.",
     });
   }
   if (!isValidUsername(username)) {
-    res.status(400).json({
+    return res.status(400).json({
       ...failedResponse,
       error: "Invalid username. Username must be at least 3 characters long.",
     });
   }
   if (!isValidPassword(password)) {
-    res.status(400).json({
+    return res.status(400).json({
       ...failedResponse,
       error: "Invalid password. Password must be at least 6 characters long.",
     });
   }
-  // if (username.length < 3) {
-  //   res.status(400).json({
-  //     success: false,
-  //     message: "Registration failed.",
-  //     error: "Username must be at least 3 characters long.",
-  //   });
-  // }
-  // const emailRegex = /\S+@\S+\.\S+/;
-  // if (!emailRegex.test(email)) {
-  //   res.status(400).json({
-  //     success: false,
-  //     message: "Registration failed.",
-  //     error: "Invalid email address.",
-  //   });
-  // }
+  const { data: existingUser, error: supabaseError } = await supabase
+    .from("user")
+    .select("*")
+    .eq("username", username);
+  if (supabaseError) {
+    // Handle potential Supabase errors
+    console.error("Supabase error checking username:", supabaseError);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed.",
+      error: "Database error checking username.",
+    });
+  }
 
-  // if (!password) {
-  //   res.status(400).json({
-  //     success: false,
-  //     message: "Registration failed.",
-  //     error: "Password is required.",
-  //   });
-  // }
-  // if (password.length < 6) {
-  //   res.status(400).json({
-  //     success: false,
-  //     message: "Registration failed.",
-  //     error: "Password must be at least 6 characters long.",
-  //   });
-  // }
-  res.status(201).json({
+  if (existingUser && existingUser.length > 0) {
+    return res.status(409).json({
+      success: false,
+      message: "Registration failed.",
+      error: "Username already exists.",
+    });
+  }
+  return res.status(201).json({
     success: true,
     message: "Registration successful!",
     userId: "fake-user-id-for-now",
