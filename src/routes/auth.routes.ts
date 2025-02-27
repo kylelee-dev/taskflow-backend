@@ -13,22 +13,31 @@ const failedResponse = {
 };
 router.post("/register", async (req: Request, res: Response): Promise<any> => {
   const { email, username, password } = req.body;
+  if (!username) {
+    return res.status(400).json({
+      ...failedResponse,
+      error: "Username is required.",
+    });
+  }
+  if (!password) {
+    return res.status(400).json({ ...failedResponse, error: "Password is required." });
+  }
   if (!isValidEmail(email)) {
     return res.status(400).json({
       ...failedResponse,
-      error: "Invalid email address.",
+      error: "Invalid email format.",
     });
   }
   if (!isValidUsername(username)) {
     return res.status(400).json({
       ...failedResponse,
-      error: "Invalid username. Username must be at least 3 characters long.",
+      error: "Username must be at least 3 characters long.",
     });
   }
   if (!isValidPassword(password)) {
     return res.status(400).json({
       ...failedResponse,
-      error: "Invalid password. Password must be at least 6 characters long.",
+      error: "Password must be at least 6 characters long.",
     });
   }
   const { data: existingUser, error: supabaseError } = await supabase
@@ -49,7 +58,7 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
     return res.status(409).json({
       success: false,
       message: "Registration failed.",
-      error: "Username already exists.",
+      error: "Username already taken.",
     });
   }
   return res.status(201).json({
