@@ -5,6 +5,7 @@ import {
   isValidUsername,
 } from "../utils/validationUtils";
 import { supabase } from "../utils/supabaseClient";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 const failedResponse = {
@@ -20,7 +21,9 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
     });
   }
   if (!password) {
-    return res.status(400).json({ ...failedResponse, error: "Password is required." });
+    return res
+      .status(400)
+      .json({ ...failedResponse, error: "Password is required." });
   }
   if (!isValidEmail(email)) {
     return res.status(400).json({
@@ -41,7 +44,7 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
     });
   }
   const { data: existingUser, error: supabaseError } = await supabase
-    .from("user")
+    .from("users")
     .select("*")
     .eq("username", username);
   if (supabaseError) {
@@ -61,11 +64,39 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
       error: "Username already taken.",
     });
   }
-  return res.status(201).json({
-    success: true,
-    message: "Registration successful!",
-    userId: "fake-user-id-for-now",
-  });
+
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const { data: newUser, error: insertError } = await supabase
+    .from("users")
+    .insert([{ username, email, password_hash: hashedPassword }])
+    .select("id");
+
+  if (insertError) {
+    console.log(insertError);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed.",
+      error: "Database error creating user.",
+    });
+  }
+  if (newUser && newUser.length > 0 && newUser[0].id) {
+    const userId = newUser[0].id;
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful!",
+      userId: userId,
+    });
+  } else {
+    console.error(
+      "Unexpected error: User not created or ID not returned by Supabase"
+    );
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed.",
+      error: "Failed to create user in database.",
+    });
+  }
 });
 
 export default router;
